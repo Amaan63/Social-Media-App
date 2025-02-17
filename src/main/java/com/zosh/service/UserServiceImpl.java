@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.zosh.config.JwtProvider;
 import com.zosh.models.User;
 import com.zosh.repository.UserRepo;
 
@@ -55,18 +56,18 @@ public class UserServiceImpl implements UserService{
 	
 
 	@Override
-	public User followUser(Integer userId1, Integer userId2) throws Exception {
+	public User followUser(Integer reqUserId, Integer userId2) throws Exception {
 		
-		User user1=findUserById(userId1);
+		User reqUser=findUserById(reqUserId);
 		User user2=findUserById(userId2);
 		
-		user2.getFollowers().add(user1.getId());
-		user1.getFollowings().add(user2.getId());
+		user2.getFollowers().add(reqUser.getId());
+		reqUser.getFollowings().add(user2.getId());
 		
-		userRepo.save(user1);
+		userRepo.save(reqUser);
 		userRepo.save(user2);
 		
-		return user1;
+		return reqUser;
 	}
 
 	
@@ -78,10 +79,20 @@ public class UserServiceImpl implements UserService{
 		}
 		
 			User oldUser=user1.get();
-			oldUser.setFirstName(user.getFirstName());
-			oldUser.setLastName(user.getLastName());
-			oldUser.setEmail(user.getEmail());
-			oldUser.setGender(user.getGender());
+			
+			if(user.getFirstName()!=null) {
+				oldUser.setFirstName(user.getFirstName());
+			}
+			if(user.getLastName()!=null) {
+				oldUser.setLastName(user.getLastName());
+			}
+			if(user.getEmail()!=null) {
+				oldUser.setEmail(user.getEmail());
+			}
+			if(user.getGender()!=null) {
+				oldUser.setGender(user.getGender());
+			}
+			
 			
 			User updatedUser=userRepo.save(oldUser);
 		
@@ -94,6 +105,15 @@ public class UserServiceImpl implements UserService{
 	
 		
 		return userRepo.searchUser(query);
+	}
+
+
+	@Override
+	public User findUserByJwt(String Jwt) {
+
+		String email=JwtProvider.getEmailFromJwtToken(Jwt);
+		User user=userRepo.findByEmail(email);
+		return user;
 	}
 
 }
